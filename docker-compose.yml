@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  tracker:
+    build: .
+    image: job-tracker:latest
+    container_name: job-tracker
+    volumes:
+      # Persist database between runs
+      - ./jobs.db:/app/jobs.db
+      # Persist logs
+      - ./logs:/app/logs
+    env_file:
+      - .env
+    environment:
+      - DATABASE_PATH=jobs.db
+    command: python src/main.py
+    # Uncomment to run specific CLI commands
+    # command: python src/main.py list --days 7
+    # command: python src/main.py search --keyword python
+    # command: python src/main.py stats
+
+  # Optional: Scheduler service that runs continuously
+  scheduler:
+    build: .
+    image: job-tracker:latest
+    container_name: job-tracker-scheduler
+    volumes:
+      - ./jobs.db:/app/jobs.db
+      - ./logs:/app/logs
+    env_file:
+      - .env
+    environment:
+      - DATABASE_PATH=jobs.db
+    command: python src/scheduler.py
+    restart: unless-stopped
+    profiles:
+      - scheduler
