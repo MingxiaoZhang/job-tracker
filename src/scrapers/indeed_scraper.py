@@ -101,11 +101,14 @@ class IndeedScraper(BaseScraper):
             if not title or not job_url:
                 return None
 
+            # Normalize URL to remove tracking parameters
+            normalized_url = self.normalize_url(job_url, 'indeed')
+
             return {
                 'title': title,
                 'company': company,
                 'location': location,
-                'url': job_url,
+                'url': normalized_url,
                 'posted_date': datetime.utcnow(),
                 'board_source': 'indeed'
             }

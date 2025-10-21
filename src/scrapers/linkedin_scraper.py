@@ -78,36 +78,53 @@ class LinkedInScraper(BaseScraper):
     def _parse_job_card_selenium(self, card) -> Dict:
         """Parse individual job card using Selenium."""
         try:
-            # Extract title
+            # Extract title - use innerText as .text returns empty in headless mode
             title_elem = card.find_element(By.CSS_SELECTOR, "h3.base-search-card__title")
-            title = title_elem.text.strip()
+            title = (title_elem.get_attribute('innerText') or title_elem.text or "").strip()
 
-            # Extract company
+            # Extract company - it's inside a nested link
             try:
-                company_elem = card.find_element(By.CSS_SELECTOR, "h4.base-search-card__subtitle")
-                company = company_elem.text.strip()
+                company_elem = card.find_element(By.CSS_SELECTOR, "h4.base-search-card__subtitle a.hidden-nested-link")
+                company = (company_elem.get_attribute('innerText') or company_elem.text or "").strip()
+                if not company:
+                    # Fallback to h4 text
+                    company_elem = card.find_element(By.CSS_SELECTOR, "h4.base-search-card__subtitle")
+                    company = (company_elem.get_attribute('innerText') or company_elem.text or "").strip()
             except:
-                company = "Unknown"
+                company = ""
 
             # Extract location
             try:
                 location_elem = card.find_element(By.CSS_SELECTOR, "span.job-search-card__location")
-                location = location_elem.text.strip()
+                location = (location_elem.get_attribute('innerText') or location_elem.text or "").strip()
+                if not location:
+                    location = None
             except:
                 location = None
 
-            # Extract URL
-            link_elem = card.find_element(By.CSS_SELECTOR, "a.base-card__full-link")
-            job_url = link_elem.get_attribute('href')
+            # Extract URL - get the full href
+            try:
+                link_elem = card.find_element(By.CSS_SELECTOR, "a.base-card__full-link")
+                job_url = link_elem.get_attribute('href')
+                if not job_url:
+                    # Try alternative selector
+                    link_elem = card.find_element(By.CSS_SELECTOR, "a[href*='/jobs/view/']")
+                    job_url = link_elem.get_attribute('href')
+            except Exception as e:
+                print(f"Error extracting URL: {e}")
+                return None
 
             if not title or not job_url:
                 return None
+
+            # Normalize URL to remove tracking parameters
+            normalized_url = self.normalize_url(job_url, 'linkedin')
 
             return {
                 'title': title,
                 'company': company,
                 'location': location,
-                'url': job_url,
+                'url': normalized_url,
                 'posted_date': datetime.utcnow(),
                 'board_source': 'linkedin'
             }
