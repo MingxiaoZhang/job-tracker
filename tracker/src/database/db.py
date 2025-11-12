@@ -23,7 +23,11 @@ class Database:
         return self.Session()
 
     def add_job(self, title: str, company: str, url: str, board_source: str,
-                location: str = None, posted_date: datetime = None) -> Job:
+                location: str = None, posted_date: datetime = None,
+                job_type: str = None, work_mode: str = None,
+                experience_level: str = None, description: str = None,
+                salary_min: int = None, salary_max: int = None,
+                salary_currency: str = 'USD', salary_period: str = None) -> Job:
         """
         Add a new job to the database.
 
@@ -38,7 +42,15 @@ class Database:
                 url=url,
                 board_source=board_source,
                 location=location,
-                posted_date=posted_date
+                posted_date=posted_date,
+                job_type=job_type,
+                work_mode=work_mode,
+                experience_level=experience_level,
+                description=description,
+                salary_min=salary_min,
+                salary_max=salary_max,
+                salary_currency=salary_currency,
+                salary_period=salary_period
             )
             session.add(job)
             session.commit()
@@ -55,19 +67,6 @@ class Database:
         finally:
             session.close()
 
-    def update_job_last_seen(self, job_id: int) -> bool:
-        """Update the last_seen timestamp for a job."""
-        session = self.get_session()
-        try:
-            job = session.query(Job).filter(Job.id == job_id).first()
-            if job:
-                job.last_seen = datetime.utcnow()
-                session.commit()
-                return True
-            return False
-        finally:
-            session.close()
-
     def get_jobs_by_status(self, status: str = 'active') -> List[Job]:
         """Get all jobs with a specific status."""
         session = self.get_session()
@@ -81,8 +80,8 @@ class Database:
         session = self.get_session()
         try:
             return session.query(Job).filter(
-                and_(Job.first_seen >= since, Job.status == status)
-            ).order_by(Job.first_seen.desc()).all()
+                and_(Job.posted_date >= since, Job.status == status)
+            ).order_by(Job.posted_date.desc()).all()
         finally:
             session.close()
 

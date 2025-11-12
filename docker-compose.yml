@@ -14,11 +14,11 @@ services:
       - .env
     environment:
       - DATABASE_PATH=jobs.db
-    command: python src/main.py
+    command: python tracker/src/main.py
     # Uncomment to run specific CLI commands
-    # command: python src/main.py list --days 7
-    # command: python src/main.py search --keyword python
-    # command: python src/main.py stats
+    # command: python tracker/src/main.py list --days 7
+    # command: python tracker/src/main.py search --keyword python
+    # command: python tracker/src/main.py stats
 
   # Optional: Scheduler service that runs continuously
   scheduler:
@@ -32,7 +32,7 @@ services:
       - .env
     environment:
       - DATABASE_PATH=jobs.db
-    command: python src/scheduler.py
+    command: python tracker/src/scheduler.py
     restart: unless-stopped
     profiles:
       - scheduler

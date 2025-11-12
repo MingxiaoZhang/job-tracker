@@ -1,147 +1,136 @@
 # Job Board Tracker
 
-A job board monitoring tool that tracks job listings across multiple platforms and notifies you of new opportunities.
+A comprehensive job board monitoring system with a powerful web dashboard. Track job listings across multiple platforms, visualize trends, and discover new opportunities.
 
-## Features
+## 📦 Project Components
+
+This repository contains two main components:
+
+### 1. **Tracker** (`/tracker`)
+Python-based job scraper that monitors Indeed and LinkedIn for new postings and stores them in DynamoDB/SQLite.
+
+**Key Features:**
 - Monitor multiple job boards (Indeed, LinkedIn)
 - Track new job postings automatically
 - Keyword-based filtering
 - Email notifications for new matches
 - Simple CLI interface
-- Docker support for easy deployment
+- Docker support for AWS deployment
 
-## Setup
+**[📖 Tracker Documentation →](tracker/README.md)**
 
-### Local Setup (without Docker)
+### 2. **Dashboard** (`/dashboard`)
+Next.js web application that provides a beautiful interface to visualize and filter your tracked jobs.
 
-1. Install dependencies:
+**Key Features:**
+- Real-time job statistics and metrics
+- Interactive charts (status distribution, timeline, top companies)
+- Searchable and filterable job table with pagination
+- Responsive design with Tailwind CSS
+- Free deployment on Vercel
+
+**[📖 Dashboard Documentation →](dashboard/README.md)**
+
+## 🚀 Quick Start
+
+### 1. Set up the Tracker
+
 ```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+# Navigate to tracker directory
+cd tracker
+
+# Install dependencies
+python -m venv ../venv
+source ../venv/bin/activate
 pip install -r requirements.txt
-```
 
-2. Configure settings:
-```bash
-cp .env.example .env
-# Edit .env with your preferences
-```
+# Configure settings
+cp .env.aws.example .env.aws
+# Edit .env.aws with your AWS credentials and preferences
 
-3. Run the tracker:
-```bash
+# Run the scraper
 python src/main.py
 ```
 
-### Docker Setup (Recommended)
+**For detailed tracker setup, deployment, and CLI usage:**
+- [Tracker README](tracker/README.md)
+- [AWS Deployment Guide](aws/DEPLOYMENT.md)
+- [Quick AWS Start](aws/QUICK_START.md)
 
-1. Build the image:
-```bash
-docker-compose build
-```
-
-2. Run once (scrape now):
-```bash
-docker-compose run --rm tracker
-```
-
-3. Run scheduler (continuous):
-```bash
-docker-compose --profile scheduler up -d scheduler
-```
-
-4. View logs:
-```bash
-docker-compose logs -f scheduler
-```
-
-5. Stop scheduler:
-```bash
-docker-compose --profile scheduler down
-```
-
-## CLI Commands
+### 2. Set up the Dashboard
 
 ```bash
-# Run scraper (default)
-python src/main.py
+# Navigate to dashboard directory
+cd dashboard
 
-# List jobs from last 7 days
-python src/main.py list --days 7
+# Install dependencies
+npm install
 
-# Search jobs by keyword
-python src/main.py search --keyword python
+# Configure environment
+cp .env.local.example .env.local
+# Edit .env.local with your AWS credentials
 
-# Show statistics
-python src/main.py stats
+# Run development server
+npm run dev
 ```
 
-### Docker CLI Commands
+**For detailed dashboard setup and deployment to Vercel:**
+- [Dashboard README](dashboard/README.md)
 
-```bash
-# List jobs
-docker-compose run --rm tracker python src/main.py list --days 7
+## 💡 Typical Workflow
 
-# Search jobs
-docker-compose run --rm tracker python src/main.py search --keyword python
+1. **Deploy Tracker to AWS** - Runs automatically every 6 hours scraping jobs
+2. **Deploy Dashboard to Vercel** - Free hosting for your dashboard
+3. **Access Dashboard** - View and filter your jobs anytime from anywhere
 
-# Stats
-docker-compose run --rm tracker python src/main.py stats
+## 📂 Project Structure
+
+```
+job-board-tracker/
+├── tracker/                 # Python job scraper
+│   ├── src/
+│   │   ├── scrapers/       # Job board scrapers (Indeed, LinkedIn)
+│   │   ├── database/       # Database models and operations
+│   │   ├── tracker/        # Job monitoring logic
+│   │   ├── cli/            # CLI commands
+│   │   ├── notifications/  # Email notifications
+│   │   ├── main.py         # Entry point
+│   │   └── scheduler.py    # Continuous scheduler
+│   ├── config/             # Configuration settings
+│   ├── tests/              # Test files
+│   └── requirements.txt    # Python dependencies
+│
+├── dashboard/              # Next.js web dashboard
+│   ├── app/               # Next.js app router pages
+│   ├── components/        # React components
+│   ├── lib/               # Utility functions and DynamoDB client
+│   └── package.json       # Node.js dependencies
+│
+├── aws/                    # AWS deployment scripts and guides
+│   ├── terraform/         # Infrastructure as Code
+│   ├── DEPLOYMENT.md      # Full deployment guide
+│   └── QUICK_START.md     # Quick start guide
+│
+├── Dockerfile              # Docker configuration for tracker
+├── docker-compose.yml      # Docker orchestration
+└── README.md              # This file
 ```
 
-## Configuration
+## 🛠️ Technology Stack
 
-Edit `.env` file:
+**Tracker:**
+- Python 3.10+ with Selenium for web scraping
+- SQLite (local) or DynamoDB (AWS) for storage
+- Docker for containerization
+- AWS ECS Fargate for serverless deployment
 
-```bash
-# Scraper settings
-SEARCH_QUERY=software engineer
-LOCATION=Remote
-SCRAPE_INTERVAL_HOURS=6
+**Dashboard:**
+- Next.js 14 with App Router
+- React with TypeScript
+- Tailwind CSS for styling
+- Chart.js for data visualization
+- Vercel for deployment (free tier)
 
-# Email notifications (optional)
-SMTP_SERVER=smtp.gmail.com
-SMTP_PORT=587
-SENDER_EMAIL=your-email@gmail.com
-SENDER_PASSWORD=your-app-password
-RECIPIENT_EMAIL=recipient@example.com
-```
+## 📝 License
 
-## Deployment
-
-### AWS EC2
-1. Launch t2.micro instance (free tier)
-2. Install Docker
-3. Clone repository
-4. Run with docker-compose
-
-### AWS ECS/Fargate
-1. Build and push image to ECR
-2. Create ECS task definition
-3. Use EventBridge to schedule task runs
-
-### Local with cron
-```bash
-# Add to crontab
-0 */6 * * * cd /path/to/tracker && docker-compose run --rm tracker
-```
-
-## Project Structure
-```
-tracker/
-├── src/
-│   ├── scrapers/      # Job board scrapers
-│   ├── database/      # Database models and operations
-│   ├── tracker/       # Job monitoring logic
-│   ├── cli/           # CLI commands
-│   ├── notifications/ # Email notifications
-│   ├── main.py        # Entry point
-│   └── scheduler.py   # Continuous scheduler
-├── config/            # Configuration
-├── tests/             # Tests
-├── Dockerfile         # Docker image definition
-├── docker-compose.yml # Docker orchestration
-└── requirements.txt   # Python dependencies
-```
-
-## License
 MIT

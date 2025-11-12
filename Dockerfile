@@ -30,14 +30,14 @@ RUN CHROME_VERSION=$(google-chrome --version | awk '{print $3}' | cut -d. -f1) \
 # Set working directory
 WORKDIR /app
 
-# Copy requirements first (for better layer caching)
-COPY requirements.txt .
+# Copy tracker requirements first (for better layer caching)
+COPY tracker/requirements.txt tracker/requirements.txt
 
 # Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r tracker/requirements.txt
 
-# Copy application code
-COPY . .
+# Copy tracker application code
+COPY tracker/ tracker/
 
 # Create logs directory
 RUN mkdir -p logs
@@ -46,4 +46,4 @@ RUN mkdir -p logs
 ENV PYTHONUNBUFFERED=1
 
 # Default command - run the scraper
-CMD ["python", "src/main.py"]
+CMD ["python", "tracker/src/main.py"]

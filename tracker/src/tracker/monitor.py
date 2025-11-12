@@ -33,8 +33,7 @@ class JobMonitor:
             existing_job = self.db.get_job_by_url(url)
 
             if existing_job:
-                # Job exists - update last_seen timestamp
-                self.db.update_job_last_seen(existing_job.id)
+                # Job exists - already tracked
                 seen_again.append(existing_job)
             else:
                 # New job - add to database
@@ -44,7 +43,15 @@ class JobMonitor:
                     url=url,
                     board_source=job_data.get('board_source', source),
                     location=job_data.get('location'),
-                    posted_date=job_data.get('posted_date')
+                    posted_date=job_data.get('posted_date'),
+                    job_type=job_data.get('job_type'),
+                    work_mode=job_data.get('work_mode'),
+                    experience_level=job_data.get('experience_level'),
+                    description=job_data.get('description'),
+                    salary_min=job_data.get('salary_min'),
+                    salary_max=job_data.get('salary_max'),
+                    salary_currency=job_data.get('salary_currency', 'USD'),
+                    salary_period=job_data.get('salary_period')
                 )
                 new_jobs.append(new_job)
 

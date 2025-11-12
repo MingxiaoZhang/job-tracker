@@ -10,7 +10,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config.settings import (
     DATABASE_PATH, SEARCH_QUERY, LOCATION
 )
-from src.database.db import Database
+from src.database.factory import get_database
 from src.scrapers.indeed_scraper import IndeedScraper
 from src.scrapers.linkedin_scraper import LinkedInScraper
 from src.tracker.monitor import JobMonitor
@@ -23,8 +23,8 @@ def run_scraper():
     print("=" * 60)
 
     # Initialize database
-    print(f"\nInitializing database: {DATABASE_PATH}")
-    db = Database(DATABASE_PATH)
+    print(f"\nInitializing database...")
+    db = get_database()
     db.create_tables()
     print("✓ Database initialized")
 
@@ -94,7 +94,7 @@ def main():
     # Check if CLI command was provided
     if len(sys.argv) > 1 and sys.argv[1] in ['list', 'search', 'stats']:
         # CLI mode
-        db = Database(DATABASE_PATH)
+        db = get_database()
         db.create_tables()
         monitor = JobMonitor(db)
         cli = CLI(db, monitor)

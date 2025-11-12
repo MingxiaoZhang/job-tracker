@@ -44,19 +44,31 @@ class CLI:
             return
 
         for i, job in enumerate(jobs, 1):
-            # Calculate how long ago the job was found
-            time_ago = datetime.utcnow() - job.first_seen
-            if time_ago.days > 0:
-                time_str = f"{time_ago.days} day{'s' if time_ago.days > 1 else ''} ago"
+            # Calculate how long ago the job was posted (if available)
+            if job.posted_date:
+                time_ago = datetime.utcnow() - job.posted_date
+                if time_ago.days > 0:
+                    time_str = f"{time_ago.days} day{'s' if time_ago.days > 1 else ''} ago"
+                else:
+                    hours = time_ago.seconds // 3600
+                    time_str = f"{hours} hour{'s' if hours != 1 else ''} ago"
             else:
-                hours = time_ago.seconds // 3600
-                time_str = f"{hours} hour{'s' if hours != 1 else ''} ago"
+                time_str = "N/A"
 
             print(f"{i}. {job.title}")
             print(f"   Company: {job.company}")
             print(f"   Location: {job.location or 'N/A'}")
+
+            # Display new fields if available
+            if hasattr(job, 'job_type') and job.job_type:
+                print(f"   Type: {job.job_type}")
+            if hasattr(job, 'work_mode') and job.work_mode:
+                print(f"   Work Mode: {job.work_mode}")
+            if hasattr(job, 'experience_level') and job.experience_level:
+                print(f"   Level: {job.experience_level}")
+
             print(f"   Source: {job.board_source}")
-            print(f"   Found: {time_str}")
+            print(f"   Posted: {time_str}")
             print(f"   URL: {job.url}")
             print()
 
@@ -76,8 +88,18 @@ class CLI:
             print(f"{i}. {job.title}")
             print(f"   Company: {job.company}")
             print(f"   Location: {job.location or 'N/A'}")
+
+            # Display new fields if available
+            if hasattr(job, 'job_type') and job.job_type:
+                print(f"   Type: {job.job_type}")
+            if hasattr(job, 'work_mode') and job.work_mode:
+                print(f"   Work Mode: {job.work_mode}")
+            if hasattr(job, 'experience_level') and job.experience_level:
+                print(f"   Level: {job.experience_level}")
+
             print(f"   Source: {job.board_source}")
-            print(f"   First Seen: {job.first_seen.strftime('%Y-%m-%d %H:%M')}")
+            if job.posted_date:
+                print(f"   Posted: {job.posted_date.strftime('%Y-%m-%d %H:%M')}")
             print(f"   URL: {job.url}")
             print()
 

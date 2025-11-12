@@ -7,7 +7,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Database settings
+DATABASE_TYPE = os.getenv('DATABASE_TYPE', 'sqlite')  # 'sqlite' or 'dynamodb'
 DATABASE_PATH = os.getenv('DATABASE_PATH', 'jobs.db')
+DYNAMODB_TABLE_NAME = os.getenv('DYNAMODB_TABLE_NAME', 'job-tracker-jobs')
+AWS_REGION = os.getenv('AWS_REGION', 'us-east-1')
 
 # Scraper settings
 SEARCH_QUERY = os.getenv('SEARCH_QUERY', 'software engineer')
