@@ -36,6 +36,9 @@ COPY tracker/requirements.txt tracker/requirements.txt
 # Install Python dependencies
 RUN pip install --no-cache-dir -r tracker/requirements.txt
 
+# Install Playwright browsers (Chromium for Indeed scraper)
+RUN playwright install --with-deps chromium
+
 # Copy tracker application code
 COPY tracker/ tracker/
 
