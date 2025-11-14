@@ -82,6 +82,11 @@ def run_scraper():
             print(f"\n• {job.title}")
             print(f"  Company: {job.company}")
             print(f"  Location: {job.location or 'N/A'}")
+            if job.salary_min and job.salary_max:
+                if job.salary_min == job.salary_max:
+                    print(f"  Salary: ${job.salary_min:,} {job.salary_period or 'yearly'}")
+                else:
+                    print(f"  Salary: ${job.salary_min:,} - ${job.salary_max:,} {job.salary_period or 'yearly'}")
             print(f"  Source: {job.board_source}")
             print(f"  URL: {job.url}")
 

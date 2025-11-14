@@ -2,8 +2,9 @@
 Base scraper class that all job board scrapers inherit from.
 """
 from abc import ABC, abstractmethod
-from typing import List, Dict
+from typing import List, Dict, Tuple, Optional
 from urllib.parse import urlparse, parse_qs
+import re
 
 class BaseScraper(ABC):
     """Abstract base class for job board scrapers."""
@@ -66,3 +67,64 @@ class BaseScraper(ABC):
 
         # Default: return original URL
         return url
+
+    @staticmethod
+    def parse_salary(salary_str: str) -> Tuple[Optional[int], Optional[int], Optional[str]]:
+        """
+        Parse salary string and extract min, max, and period.
+
+        Examples:
+            "$100,000 - $150,000 a year" -> (100000, 150000, 'yearly')
+            "$50 - $60 an hour" -> (50, 60, 'hourly')
+            "$120,000 a year" -> (120000, 120000, 'yearly')
+            "$45 an hour" -> (45, 45, 'hourly')
+
+        Args:
+            salary_str: Raw salary string
+
+        Returns:
+            Tuple of (salary_min, salary_max, salary_period)
+        """
+        if not salary_str:
+            return (None, None, None)
+
+        # Extract all dollar amounts
+        amounts = re.findall(r'\$[\d,]+(?:\.\d+)?', salary_str)
+        if not amounts:
+            return (None, None, None)
+
+        # Clean and convert to integers
+        cleaned_amounts = []
+        for amount in amounts:
+            cleaned = amount.replace('$', '').replace(',', '')
+            # Remove decimals for salary (e.g., $100,000.00 -> 100000)
+            cleaned = cleaned.split('.')[0]
+            try:
+                cleaned_amounts.append(int(cleaned))
+            except ValueError:
+                continue
+
+        if not cleaned_amounts:
+            return (None, None, None)
+
+        # Determine min and max
+        if len(cleaned_amounts) == 1:
+            salary_min = salary_max = cleaned_amounts[0]
+        else:
+            salary_min = min(cleaned_amounts)
+            salary_max = max(cleaned_amounts)
+
+        # Determine period
+        salary_lower = salary_str.lower()
+        if 'year' in salary_lower:
+            period = 'yearly'
+        elif 'hour' in salary_lower:
+            period = 'hourly'
+        elif 'month' in salary_lower:
+            period = 'monthly'
+        elif 'week' in salary_lower:
+            period = 'weekly'
+        else:
+            period = 'yearly'  # Default assumption
+
+        return (salary_min, salary_max, period)
