@@ -72,17 +72,18 @@ class LinkedInScraper(BaseScraper):
             for i, basic_info in enumerate(job_basics, 1):
                 try:
                     print(f"Processing job {i}/{len(job_basics)}: {basic_info['title'][:50]}...")
-                    salary = self._extract_salary_from_detail_page(driver, basic_info['url'])
+                    salary, description = self._extract_salary_and_description_from_detail_page(driver, basic_info['url'])
 
                     # Parse salary to extract min, max, and period
                     salary_min, salary_max, salary_period = self.parse_salary(salary) if salary else (None, None, None)
 
-                    # Combine basic info with salary
+                    # Combine basic info with salary and description
                     job_data = {
                         **basic_info,
                         'salary_min': salary_min,
                         'salary_max': salary_max,
                         'salary_period': salary_period,
+                        'description': description,
                         'posted_date': datetime.utcnow(),
                         'board_source': 'linkedin'
                     }
@@ -161,13 +162,26 @@ class LinkedInScraper(BaseScraper):
         except Exception as e:
             return None
 
-    def _extract_salary_from_detail_page(self, driver, job_url: str) -> str:
-        """Navigate to job detail page and extract salary information."""
+    def _extract_salary_and_description_from_detail_page(self, driver, job_url: str) -> tuple:
+        """Navigate to job detail page and extract salary and description."""
         salary = None
+        description = None
         try:
             # Navigate to detail page
             driver.get(job_url)
             time.sleep(random.uniform(1.5, 2.5))  # Wait for page to load
+
+            # Extract job description
+            try:
+                description_elem = driver.find_element(By.CSS_SELECTOR, "div.show-more-less-html__markup")
+                description = (description_elem.get_attribute('innerText') or description_elem.text or "").strip()
+            except:
+                # Try alternative selector
+                try:
+                    description_elem = driver.find_element(By.CSS_SELECTOR, "div.description__text")
+                    description = (description_elem.get_attribute('innerText') or description_elem.text or "").strip()
+                except:
+                    pass
 
             # Try to find compensation section first (most accurate)
             try:
@@ -203,6 +217,6 @@ class LinkedInScraper(BaseScraper):
                     pass
 
         except Exception as e:
-            print(f"Error extracting salary: {e}")
+            print(f"Error extracting salary and description: {e}")
 
-        return salary
+        return salary, description

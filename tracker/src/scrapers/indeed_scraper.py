@@ -84,17 +84,18 @@ class IndeedScraper(BaseScraper):
         for i, basic_info in enumerate(job_basics, 1):
             print(f"Processing job {i}/{len(job_basics)}: {basic_info['title'][:50]}...")
 
-            salary = self._extract_salary_standalone(basic_info['url'])
+            salary, description = self._extract_salary_and_description_standalone(basic_info['url'])
 
             # Parse salary to extract min, max, and period
             salary_min, salary_max, salary_period = self.parse_salary(salary) if salary else (None, None, None)
 
-            # Combine basic info with salary
+            # Combine basic info with salary and description
             job_data = {
                 **basic_info,
                 'salary_min': salary_min,
                 'salary_max': salary_max,
                 'salary_period': salary_period,
+                'description': description,
                 'posted_date': datetime.utcnow(),
                 'board_source': 'indeed'
             }
@@ -145,12 +146,13 @@ class IndeedScraper(BaseScraper):
         except Exception as e:
             return None
 
-    def _extract_salary_standalone(self, job_url: str) -> str:
+    def _extract_salary_and_description_standalone(self, job_url: str) -> tuple:
         """
         Visit a job URL with a completely fresh browser instance.
         This makes each visit appear independent (not part of a scraping session).
         """
         salary = None
+        description = None
 
         with sync_playwright() as p:
             try:
@@ -188,20 +190,32 @@ class IndeedScraper(BaseScraper):
                 if "blocked" in page.title().lower() or "additional verification" in page_content:
                     print("  ⚠ Bot detection triggered")
                     browser.close()
-                    return None
+                    return None, None
 
-                # Extract salary
-                salary = self._extract_salary_from_page(page)
+                # Extract salary and description
+                salary, description = self._extract_salary_and_description_from_page(page)
 
                 browser.close()
 
             except Exception as e:
                 print(f"  Error: {str(e)[:50]}")
 
-        return salary
+        return salary, description
 
-    def _extract_salary_from_page(self, page) -> str:
-        """Extract salary from an already-loaded page."""
+    def _extract_salary_and_description_from_page(self, page) -> tuple:
+        """Extract salary and description from an already-loaded page."""
+        salary = None
+        description = None
+
+        # Extract job description
+        try:
+            description_elem = page.query_selector("#jobDescriptionText")
+            if description_elem:
+                description = description_elem.inner_text().strip()
+        except:
+            pass
+
+        # Extract salary
         try:
             # Try to find salary using the ID selector
             salary_container = page.query_selector("#salaryInfoAndJobType")
@@ -215,7 +229,7 @@ class IndeedScraper(BaseScraper):
                     if match:
                         salary = match.group(0)
                         print(f"  ✓ Found salary: {salary}")
-                        return salary
+                        return salary, description
 
             # Fallback: Try alternative selectors
             salary_selectors = [
@@ -239,7 +253,7 @@ class IndeedScraper(BaseScraper):
         except Exception as e:
             pass
 
-        return None
+        return salary, description
 
     def _extract_salary_from_detail_page(self, page, job_url: str) -> str:
         """Navigate to job detail page and extract salary information."""
@@ -270,7 +284,7 @@ class IndeedScraper(BaseScraper):
                     if match:
                         salary = match.group(0)
                         print(f"  ✓ Found salary: {salary}")
-                        return salary
+                        return salary, description
 
             # Fallback: Try alternative selectors
             salary_selectors = [
